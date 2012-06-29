@@ -3261,6 +3261,10 @@ private:
  * @return UnicodeString(s1).append(s2)
  * @stable ICU 2.8
  */
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
+
 U_COMMON_API UnicodeString U_EXPORT2
 operator+ (const UnicodeString &s1, const UnicodeString &s2);
 

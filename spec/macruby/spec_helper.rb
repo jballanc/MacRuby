@@ -12,7 +12,7 @@ class FixtureCompiler
   FRAMEWORKS = %w{ Foundation }
   ARCHS      = %w{ i386 x86_64 }
   OPTIONS    = %W{ -g -dynamiclib -fobjc-gc -Wl,-undefined,dynamic_lookup -I#{SOURCE_ROOT}/include }
-  GCC        = "/usr/bin/gcc"
+  GCC        = "/usr/bin/clang"
   
   attr_reader :gcc, :frameworks, :archs, :options
   attr_reader :fixture, :bundle, :bridge_support

@@ -115,7 +115,7 @@ module RbConfig
   if File.exist? "#{CC}"
     CONFIG["CC"] = "#{CC}"
   else
-    CONFIG["CC"] = "/usr/bin/gcc"
+    CONFIG["CC"] = "/usr/bin/clang"
   end
   CONFIG["CFLAGS"] = "$(ARCH_FLAG) -fexceptions -fno-common -pipe $(cflags)"
   CONFIG["LDFLAGS"] = "$(ARCH_FLAG)"
@@ -124,10 +124,10 @@ module RbConfig
   if File.exist? "#{CXX}"
     CONFIG["CXX"] = "#{CXX}"
   else
-    CONFIG["CXX"] = "/usr/bin/g++"
+    CONFIG["CXX"] = "/usr/bin/clang++"
   end
   CONFIG["CXXFLAGS"] = "$(ARCH_FLAG)"
-  CONFIG["CPP"] = "/usr/bin/gcc -E"
+  CONFIG["CPP"] = "/usr/bin/clang -E"
   CONFIG["GREP"] = "/usr/bin/grep"
   CONFIG["EGREP"] = "/usr/bin/grep -E"
   CONFIG["GNU_LD"] = "no"
@@ -177,7 +177,7 @@ module RbConfig
   CONFIG["optflags"] = "-O#{OPTZ_LEVEL}"
   CONFIG["debugflags"] = "-g"
   CONFIG["warnflags"] = "-Wall"
-  CONFIG["LIBRUBY_LDSHARED"] = "/usr/bin/gcc -dynamiclib -undefined suppress -flat_namespace $(ARCH_FLAG)"
+  CONFIG["LIBRUBY_LDSHARED"] = "/usr/bin/clang -dynamiclib -undefined suppress -flat_namespace $(ARCH_FLAG)"
   CONFIG["LIBRUBY_DLDFLAGS"] = "-install_name $(libdir)/lib$(RUBY_SO_NAME).dylib -current_version $(MAJOR).$(MINOR).$(TEENY) -compatibility_version $(MAJOR).$(MINOR)"
   CONFIG["rubyw_install_name"] = ""
   CONFIG["RUBYW_INSTALL_NAME"] = ""

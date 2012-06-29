@@ -92,8 +92,8 @@ class MacRuby::Compiler
     @tmpfiles = []
 
     # Locate necessary programs.
-    @gcc  = locate('gcc')
-    @gcxx = locate('g++')
+    @gcc  = locate('clang')
+    @gcxx = locate('clang++')
     @nm = locate('nm')
     @lipo = locate('lipo')
     @strip = locate('strip')
@@ -110,7 +110,7 @@ class MacRuby::Compiler
     if system("#{@llc} -help | grep jit-enable-eh >& /dev/null")
       @llc_flags << '-jit-enable-eh'
     else
-      @llc_flags << '-enable-eh'
+      @llc_flags << '-enable-correct-eh-support'
     end
   end
 

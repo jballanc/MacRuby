@@ -44,13 +44,13 @@ RoxorCompiler::compile_debug_trap(void)
     if (debugTrapFunc == NULL) {
 	// void rb_vm_debug_trap(const char *file, int line,
 	//	VALUE self, rb_vm_block_t *current_block, int lvars_size, ...);
-	std::vector<const Type *> types;
+	std::vector<Type *> types;
 	types.push_back(PtrTy);
 	types.push_back(Int32Ty);
 	types.push_back(RubyObjTy);
 	types.push_back(PtrTy);
 	types.push_back(Int32Ty);
-	FunctionType *ft = FunctionType::get(VoidTy, types, true);
+	FunctionType *ft = FunctionType::get(VoidTy, ArrayRef<Type*>(types), true);
 	debugTrapFunc = cast<Function>
 	    (module->getOrInsertFunction( "rb_vm_debug_trap", ft));
     }
@@ -72,7 +72,7 @@ RoxorCompiler::compile_debug_trap(void)
 	params.push_back(iter->second);
     }
 
-    CallInst::Create(debugTrapFunc, params.begin(), params.end(), "", bb);
+    CallInst::Create(debugTrapFunc, ArrayRef<Value*>(params), "", bb);
 }
 
 extern "C"

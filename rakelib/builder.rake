@@ -3,7 +3,7 @@ require File.expand_path('../builder/builder', __FILE__)
 desc "Build the markgc tool"
 task :mark_gc do
   if !File.exist?('markgc')
-    sh "/usr/bin/gcc -std=c99 markgc.c -o markgc -Wno-format"
+    sh "/usr/bin/clang -std=c99 markgc.c -o markgc -Wno-format"
   end
 end
 
@@ -99,9 +99,9 @@ def build_objects
     # Locate llvm-gcc...
     path = ENV['PATH'].split(':')
     path.unshift('/Developer/usr/bin')
-    llvm_gcc = path.map { |x| File.join(x, 'llvm-gcc') }.find { |x| File.exist?(x) }
+    llvm_gcc = path.map { |x| File.join(x, 'clang') }.find { |x| File.exist?(x) }
     unless llvm_gcc
-      $stderr.puts "Cannot locate llvm-gcc in given path: #{path}"
+      $stderr.puts "Cannot locate clang in given path: #{path}"
       exit 1
     end
     opt = File.join(LLVM_PATH, 'bin/opt')
@@ -111,10 +111,10 @@ def build_objects
     sh "echo '' > #{kernel_data_c}"
     cflags = $builder.cflags.scan(/-I[^\s]+/).join(' ')
     cflags << ' ' << $builder.cflags.scan(/-D[^\s]+/).join(' ')
-    $builder.archs.each do |x| 
+    $builder.archs.each do |x|
       output = File.join($builder.objsdir, "kernel-#{x}.bc")
       # Compile the IR for the kernel.c source file & optimize it.
-      sh "#{llvm_gcc} -arch #{x} -fexceptions -fno-stack-protector -fwrapv #{cflags} --emit-llvm -c kernel.c -o #{output}"
+      sh "#{llvm_gcc} -arch #{x} -fexceptions -fno-stack-protector -fwrapv #{cflags} -emit-llvm -c kernel.c -o #{output}"
       sh "#{opt} -O3 #{output} -o=#{output}"
       # Convert the bitcode into a C static array. We append a null byte to the
       # bitcode file because xxd doesn't, and it's needed by the bitcode

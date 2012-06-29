@@ -47,15 +47,15 @@ COMPILE_STDLIB = b.option('compile_stdlib', true) { |x| x == 'true' }
 OPTZ_LEVEL = b.option('optz_level', 3) { |x| x.to_i }
 IPHONEOS_SDK = b.option('iphoneos_sdk', nil)
 
-default_CC = '/usr/bin/gcc-4.2'
+default_CC = '/usr/bin/clang'
 unless File.exist?(default_CC)
-  default_CC = '/usr/bin/gcc'
+  default_CC = '/usr/bin/clang'
 end
 CC = b.option('CC', default_CC)
 
-default_CXX = '/usr/bin/g++-4.2'
+default_CXX = '/usr/bin/clang++'
 unless File.exist?(default_CXX)
-  default_CXX = '/usr/bin/g++'
+  default_CXX = '/usr/bin/clang++'
 end
 CXX = b.option('CXX', default_CXX)
 
@@ -123,7 +123,7 @@ RUBY_VENDOR_ARCHLIB = File.join(RUBY_VENDOR_LIB2, NEW_RUBY_PLATFORM)
 INSTALL_NAME  = File.join(FRAMEWORK_USR_LIB, 'lib' + RUBY_SO_NAME + '.dylib')
 # NOTE This gets expanded here instead of in rbconfig.rb
 DYLIB_ALIASES = "lib#{RUBY_SO_NAME}.#{NEW_RUBY_MAJOR_VERSION}.#{NEW_RUBY_MINOR_VERSION}.dylib lib#{RUBY_SO_NAME}.dylib"
-LLVM_MODULES  = "core jit nativecodegen bitwriter bitreader ipo"
+LLVM_MODULES  = "all core jit nativecodegen bitwriter bitreader ipo"
 EXPORTED_SYMBOLS_LIST = "./exported_symbols_list"
 
 # Full list of objects to build.
@@ -156,10 +156,10 @@ class BuilderConfig
     has_libauto = sdk ? File.exist?("#{sdk}/usr/lib/libauto.dylib") : true
     archflags = archs.map { |x| "-arch #{x}" }.join(' ')
     @cflags = "-std=c99 -I. -I./include -pipe -fno-common -fexceptions -fblocks -fwrapv -g -O#{OPTZ_LEVEL} -Wall -Wno-deprecated-declarations -Werror #{archflags} #{EXTRA_CFLAGS}"
-    @cxxflags = "-I. -I./include -fblocks -g -Wall -Wno-deprecated-declarations -Werror #{archflags} #{EXTRA_CFLAGS}"
-    @ldflags = '-lpthread -ldl -lxml2 -lobjc -licucore -framework Foundation'
+    @cxxflags = "-std=c++11 -stdlib=libc++ -I. -I./include -fblocks -g -Wall -Wno-deprecated-declarations -Werror #{archflags} #{EXTRA_CFLAGS}"
+    @ldflags = '-lpthread -stdlib=libc++ -ldl -lxml2 -lobjc -licucore -framework Foundation'
     @ldflags << " -lauto" if has_libauto
-    @cxxflags << ' ' << `#{LLVM_CONFIG} --cxxflags #{LLVM_MODULES}`.sub(/-DNDEBUG/, '').sub(/-fno-exceptions/, '').sub(/-Wcast-qual/, '').sub!(/-O\d/, "-O#{OPTZ_LEVEL}").strip.gsub(/\n/, '')
+    @cxxflags << ' ' << `#{LLVM_CONFIG} --cxxflags`.sub(/-DNDEBUG/, '').sub(/-fno-exceptions/, '').sub(/-Wcast-qual/, '').sub!(/(-O\d|$)/, "-O#{OPTZ_LEVEL}").strip.gsub(/\n/, '')
     @cxxflags << ' -DLLVM_TOT' if ENV['LLVM_TOT']
     @ldflags << ' ' << `#{LLVM_CONFIG} --ldflags --libs #{LLVM_MODULES}`.strip.gsub(/\n/, '')
     unless has_libauto

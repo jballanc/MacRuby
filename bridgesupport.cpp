@@ -277,7 +277,8 @@ RoxorCompiler::compile_set_struct(Value *rcv, int field, Value *val)
 	ConstantInt::get(Int32Ty, field),
 	val
     };
-    CallInst::Create(setStructFunc, args, args + 3, "", bb);
+
+    CallInst::Create(setStructFunc, ArrayRef<Value*>(args, args+3), "", bb);
 }
 
 Function *
@@ -295,7 +296,7 @@ RoxorCompiler::compile_bs_struct_writer(rb_vm_bs_boxed_t *bs_boxed, int field)
 
     assert((unsigned)field < bs_boxed->as.s->fields_count);
     const char *ftype = bs_boxed->as.s->fields[field].type;
-    const Type *llvm_type = convert_type(ftype);
+    Type *llvm_type = convert_type(ftype);
 
     Value *fval = new AllocaInst(llvm_type, "", bb);
     val = compile_conversion_to_c(ftype, val, fval);
@@ -337,7 +338,7 @@ RoxorCompiler::compile_bs_struct_new(rb_vm_bs_boxed_t *bs_boxed)
 
     for (unsigned i = 0; i < bs_boxed->as.s->fields_count; i++) {
 	const char *ftype = bs_boxed->as.s->fields[i].type;
-	const Type *llvm_type = convert_type(ftype);
+	Type *llvm_type = convert_type(ftype);
 	Value *fval = new AllocaInst(llvm_type, "", bb);
 
 	const size_t type_size = GET_CORE()->get_sizeof(llvm_type);
@@ -349,11 +350,11 @@ RoxorCompiler::compile_bs_struct_new(rb_vm_bs_boxed_t *bs_boxed)
 	    ConstantInt::get(Int32Ty, 0),		// align
 	    ConstantInt::get(Int1Ty, 0)			// volatile
 	};
-	const Type *Tys[] = { args[0]->getType(), args[2]->getType() };
+	Type *Tys[] = { args[0]->getType(), args[2]->getType() };
 	Function *memset_func = Intrinsic::getDeclaration(module,
-		Intrinsic::memset, Tys, 2);
+		Intrinsic::memset, ArrayRef<Type*>(Tys, Tys + 2));
 	assert(memset_func != NULL);
-	CallInst::Create(memset_func, args, args + 5, "", bb);
+	CallInst::Create(memset_func, ArrayRef<Value*>(args, args+5), "", bb);
 
 	fval = new LoadInst(fval, "", bb);
 	fval = compile_conversion_to_ruby(ftype, llvm_type, fval);
@@ -373,7 +374,7 @@ RoxorCompiler::compile_bs_struct_new(rb_vm_bs_boxed_t *bs_boxed)
 
     for (unsigned i = 0; i < bs_boxed->as.s->fields_count; i++) {
 	const char *ftype = bs_boxed->as.s->fields[i].type;
-	const Type *llvm_type = convert_type(ftype);
+	Type *llvm_type = convert_type(ftype);
 	Value *fval = new AllocaInst(llvm_type, "", bb);
 
 	Value *index = ConstantInt::get(Int32Ty, i);
@@ -1459,13 +1460,13 @@ RoxorCompiler::compile_ffi_function(void *stub, void *imp, int argc)
     //     VALUE *argv = alloca(...);
     //     return stub(imp, argc, argv);
     // }
-    std::vector<const Type *> f_types;
+    std::vector<Type *> f_types;
     f_types.push_back(RubyObjTy);
     f_types.push_back(PtrTy);
     for (int i = 0; i < argc; i++) {
 	f_types.push_back(RubyObjTy);
     }
-    FunctionType *ft = FunctionType::get(RubyObjTy, f_types, false);
+    FunctionType *ft = FunctionType::get(RubyObjTy, ArrayRef<Type*>(f_types), false);
     Function *f = cast<Function>(module->getOrInsertFunction("", ft));
 
     bb = BasicBlock::Create(context, "EntryBlock", f);
@@ -1475,7 +1476,7 @@ RoxorCompiler::compile_ffi_function(void *stub, void *imp, int argc)
     arg++; // skip sel
 
     std::vector<Value *> params;
-    std::vector<const Type *> stub_types;
+    std::vector<Type *> stub_types;
 
     // First argument is the function implementation.
     params.push_back(compile_const_pointer(imp));
@@ -1504,13 +1505,12 @@ RoxorCompiler::compile_ffi_function(void *stub, void *imp, int argc)
     stub_types.push_back(RubyObjPtrTy);
 
     // Cast the given stub using the correct function signature.
-    FunctionType *stub_ft = FunctionType::get(RubyObjTy, stub_types, false);
+    FunctionType *stub_ft = FunctionType::get(RubyObjTy, ArrayRef<Type*>(stub_types), false);
     Value *stub_val = new BitCastInst(compile_const_pointer(stub),
 	    PointerType::getUnqual(stub_ft), "", bb);
 
     // Call the stub and return its return value.
-    CallInst *stub_call = CallInst::Create(stub_val, params.begin(),
-	    params.end(), "", bb);
+    CallInst *stub_call = CallInst::Create(stub_val, ArrayRef<Value*>(params), "", bb);
     ReturnInst::Create(context, stub_call, bb);
 
     return f;

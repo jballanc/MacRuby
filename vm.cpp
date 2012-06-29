@@ -36,7 +36,7 @@
 # include <llvm/Target/TargetData.h>
 # include <llvm/Target/TargetMachine.h>
 # include <llvm/Target/TargetOptions.h>
-# include <llvm/Target/TargetSelect.h>
+# include <llvm/Support/TargetSelect.h>
 # include <llvm/Transforms/Scalar.h>
 # include <llvm/Transforms/IPO.h>
 # include <llvm/Support/raw_ostream.h>
@@ -45,7 +45,7 @@
 # endif
 # include <llvm/Support/PrettyStackTrace.h>
 # include <llvm/Support/MemoryBuffer.h>
-# include <llvm/Support/StandardPasses.h>
+# include <llvm/Transforms/IPO/PassManagerBuilder.h>
 # include <llvm/Intrinsics.h>
 # include <llvm/Bitcode/ReaderWriter.h>
 # include <llvm/LLVMContext.h>
@@ -214,6 +214,21 @@ class RoxorJITManager : public JITMemoryManager, public JITEventListener {
 	    return mm->allocateGlobal(Size, Alignment);
 	}
 
+  uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
+                               unsigned SectionID) {
+      return mm->allocateDataSection(Size, Alignment, SectionID);
+  }
+
+  void *getPointerToNamedFunction(const std::string &Name,
+                                  bool AbortOnFailure = true) {
+      return mm->getPointerToNamedFunction(Name, AbortOnFailure);
+  }
+
+  uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
+                               unsigned SectionID) {
+      return mm->allocateCodeSection(Size, Alignment, SectionID);
+  }
+
 	void AllocateGOT(void) {
 	    mm->AllocateGOT();
 	}
@@ -358,13 +373,30 @@ RoxorCore::prepare_jit(void)
 	}
     }
 
+    llvm::TargetOptions Opts;
+    Opts.JITExceptionHandling = true;
+    Opts.JITEmitDebugInfo = true;
+    Opts.NoFramePointerElim = true;
+
     std::string err;
-    ee = ExecutionEngine::createJIT(RoxorCompiler::module, &err, jmm,
-	    opt_level, false);
+
+    // Build engine with JIT
+    llvm::EngineBuilder factory(RoxorCompiler::module);
+    factory.setEngineKind(llvm::EngineKind::JIT);
+    factory.setAllocateGVsWithCode(false);
+    factory.setOptLevel(opt_level);
+    factory.setTargetOptions(Opts);
+    factory.setJITMemoryManager(jmm);
+    factory.setErrorStr(&err);
+    factory.setAllocateGVsWithCode(false);
+    ee = factory.create();
+    // ee = ExecutionEngine::createJIT(RoxorCompiler::module, &err, jmm,
+	   //  opt_level, false);
     if (ee == NULL) {
 	fprintf(stderr, "error while creating JIT: %s\n", err.c_str());
 	abort();
     }
+
     ee->DisableLazyCompilation();
     ee->RegisterJITEventListener(jmm);
 
@@ -570,6 +602,17 @@ rb_verify_module(void)
 	printf("Error during module verification\n");
 	abort();
     }
+
+    // static int fooint = 0;
+    // fooint++;
+    // char foo[100] = {0};
+    // sprintf(foo, "file-%d.bc", fooint);
+    // std::string ErrInfo;
+    // raw_ostream *out = new raw_fd_ostream(foo, ErrInfo,
+    //                          raw_fd_ostream::F_Binary);
+    // WriteBitcodeToFile(RoxorCompiler::module, *out);
+    // delete out;
+    // printf("Done\n\n");
 }
 
 IMP
@@ -579,6 +622,8 @@ RoxorCore::compile(Function *func, bool run_optimize)
     if (iter != JITcache.end()) {
 	return iter->second;
     }
+
+    rb_verify_module();
 
 #if ROXOR_COMPILER_DEBUG
     // in AOT mode, the verifier is already called
@@ -856,7 +901,7 @@ rb_vm_is_ruby_method(Method m)
 size_t
 RoxorCore::get_sizeof(const Type *type)
 {
-    return ee->getTargetData()->getTypeSizeInBits(type) / 8;
+    return ee->getTargetData()->getTypeSizeInBits(const_cast<Type*>(type)) / 8;
 }
 
 size_t
@@ -875,7 +920,7 @@ bool
 RoxorCore::is_large_struct_type(const Type *type)
 {
     return type->getTypeID() == Type::StructTyID
-	&& ee->getTargetData()->getTypeSizeInBits(type) > LARGE_STRUCT_SIZE;
+	&& ee->getTargetData()->getTypeSizeInBits(const_cast<Type*>(type)) > LARGE_STRUCT_SIZE;
 }
 
 GlobalVariable *
@@ -4399,8 +4444,13 @@ rb_vm_aot_compile(NODE *node)
 
     // Run standard optimization passes on the module.
     PassManager pm;
-    createStandardModulePasses(&pm, 3, false, true, true, true, true,
-	    createFunctionInliningPass());
+    
+    PassManagerBuilder passBuilder;
+    passBuilder.Inliner = llvm::createFunctionInliningPass();
+    passBuilder.OptLevel = 0;
+    passBuilder.populateModulePassManager(pm);
+    passBuilder.populateLTOPassManager(pm, false, false);
+
     pm.run(*RoxorCompiler::module);
 
     // Dump the bitcode.
@@ -5377,13 +5427,13 @@ Init_PreVM(void)
 {
 #if !defined(MACRUBY_STATIC)
     // To emit DWARF exception tables. 
-    llvm::JITExceptionHandling = true;
+    //llvm::JITExceptionHandling = true;
     // To emit DWARF debug metadata. 
-    llvm::JITEmitDebugInfo = true; 
+    //llvm::JITEmitDebugInfo = true; 
     // To not interfere with our signal handling mechanism.
     llvm::DisablePrettyStackTrace = true;
     // To not corrupt stack pointer (essential for backtracing).
-    llvm::NoFramePointerElim = true;
+    //llvm::NoFramePointerElim = true;
 
     if (getenv("VM_STATS") != NULL) {
 	vm_enable_stats = true;

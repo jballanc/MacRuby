@@ -71,7 +71,7 @@ class RoxorCompiler {
 
 	void inline_function_calls(Function *f);
 
-	const Type *convert_type(const char *type);
+	Type *convert_type(const char *type);
 
 	bool is_inside_eval(void) { return inside_eval; }
 	void set_inside_eval(bool flag) { inside_eval = flag; }
@@ -293,23 +293,23 @@ class RoxorCompiler {
 	Constant *defaultScope;
 	Constant *publicScope;
 
-	const Type *VoidTy;
-	const Type *Int1Ty;
-	const Type *Int8Ty;
-	const Type *Int16Ty;
-	const Type *Int32Ty;
-	const Type *Int64Ty;
-	const Type *FloatTy;
-	const Type *DoubleTy;
-	const Type *RubyObjTy; 
-	const PointerType *RubyObjPtrTy;
-	const PointerType *RubyObjPtrPtrTy;
-	const PointerType *PtrTy;
-	const PointerType *PtrPtrTy;
-	const Type *IntTy;
-	const PointerType *Int32PtrTy;
-	const Type *BitTy;
-	const Type *BlockLiteralTy;
+	Type *VoidTy;
+	Type *Int1Ty;
+	Type *Int8Ty;
+	Type *Int16Ty;
+	Type *Int32Ty;
+	Type *Int64Ty;
+	Type *FloatTy;
+	Type *DoubleTy;
+	Type *RubyObjTy; 
+	PointerType *RubyObjPtrTy;
+	PointerType *RubyObjPtrPtrTy;
+	PointerType *PtrTy;
+	PointerType *PtrPtrTy;
+	Type *IntTy;
+	PointerType *Int32PtrTy;
+	Type *BitTy;
+	Type *BlockLiteralTy;
 
 	unsigned dbg_mdkind;
 
@@ -326,7 +326,7 @@ class RoxorCompiler {
 	}
 
 	virtual Constant *
-	compile_const_pointer(void *ptr, const PointerType *type=NULL) {
+	compile_const_pointer(void *ptr, PointerType *type=NULL) {
 	    if (type == NULL) {
 		type = PtrTy;
 	    }
@@ -521,7 +521,7 @@ class RoxorAOTCompiler : public RoxorCompiler {
 	Value *compile_slot_cache(ID id);
 
 	Constant *
-	compile_const_pointer(void *ptr, const PointerType *type=NULL) {
+	compile_const_pointer(void *ptr, PointerType *type=NULL) {
 	    if (ptr == NULL) {
 		return RoxorCompiler::compile_const_pointer(ptr, type);
 	    }
