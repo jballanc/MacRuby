@@ -217,7 +217,7 @@ extern "C" {
 EOS
 
     # Build.
-    main = gen_tmpfile('main', 'c')
+    main = gen_tmpfile('main', 'cc')
     File.open(main, 'w') { |io| io.write(main_txt) }
     linkf = @internal ? "-L. -lmacruby" : "-L#{RbConfig::CONFIG['libdir']} -lmacruby"
     execute("#{@gcxx} \"#{main}\" -fexceptions -dynamic -bundle -undefined suppress -flat_namespace #{arch_flags} #{linkf} \"#{obj}\" -o \"#{output}\"")
@@ -243,7 +243,7 @@ EOS
     main_txt << "}}"
 
     # Build.
-    main = gen_tmpfile('main', 'c')
+    main = gen_tmpfile('main', 'cc')
     File.open(main, 'w') { |io| io.write(main_txt) }
     @linkf << @internal ? "-L. -lmacruby" : "-L#{RbConfig::CONFIG['libdir']} -lmacruby"
     objs = objs_data.map { |obj, f| "\"#{obj}\"" }.join(' ')
