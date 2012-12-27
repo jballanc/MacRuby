@@ -22,9 +22,9 @@
 # include <llvm/CallingConv.h>
 # include <llvm/Instructions.h>
 # include <llvm/PassManager.h>
-# include <llvm/Analysis/DebugInfo.h>
+# include <llvm/DebugInfo.h>
 # if !defined(LLVM_TOT)
-#  include <llvm/Analysis/DIBuilder.h>
+#  include <llvm/DIBuilder.h>
 # endif
 # include <llvm/Analysis/Verifier.h>
 # include <llvm/Target/TargetData.h>

@@ -16,13 +16,13 @@
 #include <llvm/CallingConv.h>
 #include <llvm/Instructions.h>
 #include <llvm/Intrinsics.h>
-#include <llvm/Analysis/DebugInfo.h>
+#include <llvm/DebugInfo.h>
 #if !defined(LLVM_TOT)
-# include <llvm/Analysis/DIBuilder.h>
+# include <llvm/DIBuilder.h>
 #endif
 #include <llvm/ExecutionEngine/JIT.h>
 #include <llvm/PassManager.h>
-#include <llvm/Target/TargetData.h>
+#include <llvm/DataLayout.h>
 using namespace llvm;
 
 #endif // !MACRUBY_STATIC
