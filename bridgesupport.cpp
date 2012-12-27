@@ -24,7 +24,7 @@
 # endif
 # include <llvm/ExecutionEngine/JIT.h>
 # include <llvm/PassManager.h>
-# include <llvm/Target/TargetData.h>
+# include <llvm/DataLayout.h>
 using namespace llvm;
 #endif
 

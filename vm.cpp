@@ -27,13 +27,12 @@
 #  include <llvm/DIBuilder.h>
 # endif
 # include <llvm/Analysis/Verifier.h>
-# include <llvm/Target/TargetData.h>
+# include <llvm/DataLayout.h>
 # include <llvm/CodeGen/MachineFunction.h>
 # include <llvm/ExecutionEngine/JIT.h>
 # include <llvm/ExecutionEngine/JITMemoryManager.h>
 # include <llvm/ExecutionEngine/JITEventListener.h>
 # include <llvm/ExecutionEngine/GenericValue.h>
-# include <llvm/Target/TargetData.h>
 # include <llvm/Target/TargetMachine.h>
 # include <llvm/Target/TargetOptions.h>
 # include <llvm/Support/TargetSelect.h>
@@ -401,7 +400,7 @@ RoxorCore::prepare_jit(void)
     ee->RegisterJITEventListener(jmm);
 
     fpm = new FunctionPassManager(RoxorCompiler::module);
-    fpm->add(new TargetData(*ee->getTargetData()));
+    fpm->add(new DataLayout(*ee->getDataLayout()));
 
     // Do simple "peephole" optimizations and bit-twiddling optzns.
     fpm->add(createInstructionCombiningPass());
@@ -901,7 +900,7 @@ rb_vm_is_ruby_method(Method m)
 size_t
 RoxorCore::get_sizeof(const Type *type)
 {
-    return ee->getTargetData()->getTypeSizeInBits(const_cast<Type*>(type)) / 8;
+    return ee->getDataLayout()->getTypeSizeInBits(const_cast<Type*>(type)) / 8;
 }
 
 size_t
@@ -920,7 +919,7 @@ bool
 RoxorCore::is_large_struct_type(const Type *type)
 {
     return type->getTypeID() == Type::StructTyID
-	&& ee->getTargetData()->getTypeSizeInBits(const_cast<Type*>(type)) > LARGE_STRUCT_SIZE;
+	&& ee->getDataLayout()->getTypeSizeInBits(const_cast<Type*>(type)) > LARGE_STRUCT_SIZE;
 }
 
 GlobalVariable *
