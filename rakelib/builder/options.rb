@@ -156,7 +156,7 @@ class BuilderConfig
     has_libauto = sdk ? File.exist?("#{sdk}/usr/lib/libauto.dylib") : true
     archflags = archs.map { |x| "-arch #{x}" }.join(' ')
     @cflags = "-std=c99 -I. -I./include -pipe -fno-common -fexceptions -fblocks -fwrapv -g -O#{OPTZ_LEVEL} -Wall -Wno-deprecated-declarations -Werror #{archflags} #{EXTRA_CFLAGS}"
-    @cxxflags = "-std=c++11 -I. -I./include -fblocks -g -Wall -Wno-deprecated-declarations -Werror #{archflags} #{EXTRA_CFLAGS}"
+    @cxxflags = "-I. -I./include -fblocks -g -Wall -Wno-deprecated-declarations -Werror #{archflags} #{EXTRA_CFLAGS}"
     @ldflags = '-lpthread -ldl -lxml2 -lobjc -licucore -framework Foundation'
     @ldflags << ' -stdlib=libc++' if system("#{LLVM_CONFIG} --cxxflags | grep 'stdlib=libc++' >& /dev/null")
     @ldflags << " -lauto" if has_libauto
