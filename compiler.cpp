@@ -6449,15 +6449,19 @@ RoxorCompiler::compile_stub(const char *types, bool variadic, int min_argc,
     CallInst *imp_call = CallInst::Create(imp, ArrayRef<Value*>(params),
 	    "", bb); 
 
+    AttrBuilder by_val;
+    by_val.addAttribute(Attributes::ByVal);
     for (std::vector<unsigned int>::iterator iter = byval_args.begin();
 	 iter != byval_args.end(); ++iter) {
-	imp_call->addAttribute(*iter, Attribute::ByVal);
+	imp_call->addAttribute(*iter, Attributes::get(imp_call->getContext(), by_val));
     }
 
     // Compile retval.
     Value *retval;
     if (sret != NULL) {
-	imp_call->addAttribute(1, Attribute::StructRet);
+        AttrBuilder struct_ret;
+        struct_ret.addAttribute(Attributes::StructRet);
+	imp_call->addAttribute(1, Attributes::get(imp_call->getContext(), struct_ret));
 	retval = new LoadInst(sret, "", bb);
     }
     else {
@@ -6847,11 +6851,15 @@ RoxorCompiler::compile_objc_stub(Function *ruby_func, IMP ruby_imp,
     if (f_sret_type != NULL) {
 	sret = arg++;
 	sret_i = 1;
-	f->addAttribute(1, Attribute::StructRet);
+        AttrBuilder struct_ret;
+        struct_ret.addAttribute(Attributes::StructRet);
+	f->addAttribute(1, Attributes::get(f->getContext(), struct_ret));
     }
+    AttrBuilder by_val;
+    by_val.addAttribute(Attributes::ByVal);
     for (std::vector<unsigned int>::iterator iter = byval_args.begin();
-	 iter != byval_args.end(); ++iter) {
-	f->addAttribute(*iter, Attribute::ByVal);
+        iter != byval_args.end(); ++iter) {
+	f->addAttribute(*iter, Attributes::get(f->getContext(), by_val));
     }
 
     std::vector<Value *> params;
